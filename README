@@ -1,0 +1,3 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=3522
+
+Based on the script written by James Kidd years ago. Added some new stuffs, such as ODS highlighting and new keywords into the script. Fixed couples of bugs in comment, function and macro highlighting. Added highlighting for SAS format values.
