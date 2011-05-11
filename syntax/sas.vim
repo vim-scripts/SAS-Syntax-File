@@ -2,11 +2,11 @@
 " Language:	SAS
 " Maintainer:	James Kidd <james.kidd@covance.com>
 " Last Change:
-"		25 Mar 2011 by Zhenhuan Hu <wildkeny@gmail.com>
+"		1 Apr 2011 by Zhenhuan Hu <wildkeny@gmail.com>
 
 "		Fixed mis-recognization of keywords and function names
 "		Fixed when several comments put in the same line
-"		Added highlighting for new statement in SAS 9.1/9.2
+"		Added highlighting for new statements and functions in SAS 9.1/9.2
 "		Added highlighting for user defined macro functions
 "		Added highlighting for ODS
 "		Added highlighting for formats
@@ -67,8 +67,8 @@ syn region sasComment start="^\s*\*" skip=";\s*\*" end=";" contains=sasTodo
 syn match sasProcName "PROC \w\+" contained
 syn keyword sasProcOption MAX MEDIAN MIN MISSING contained
 syn keyword sasProcKwd DATA contained
-syn region sasProc start="^\s*PROC" end=";" contains=sasProcName, sasProcOption, sasProcKwd, sasString, sasNumber
-syn region sasProc start=";\s*PROC" end=";" contains=sasProcName, sasProcOption, sasProcKwd, sasString, sasNumber
+syn region sasProc start="^\s*PROC" end=";" contains=sasProcName, sasProcOption, sasProcKwd, sasString, sasNumber, sasComment, sasMacro, sasMacroFunction, sasMacroVar
+syn region sasProc start=";\s*PROC" end=";" contains=sasProcName, sasProcOption, sasProcKwd, sasString, sasNumber, sasComment, sasMacro, sasMacroFunction, sasMacroVar
 
 " Base SAS Procs - version 8.1
 syn keyword sasStep RUN QUIT DATA
@@ -79,13 +79,19 @@ syn keyword sasStatement CONTINUE DATALINES DATALINES4 DELETE DISPLAY
 syn keyword sasStatement DM DROP ENDSAS ERROR FILE FILENAME FOOTNOTE
 syn keyword sasStatement FORMAT GOTO INFILE INFORMAT INPUT KEEP
 syn keyword sasStatement LABEL LEAVE LENGTH LIBNAME LINK LIST LOSTCARD
-syn keyword sasStatement MERGE MISSING MODIFY OPTIONS OUTPUT PAGE
+syn keyword sasStatement MERGE MISSING MODIFY OPTIONS OUTPUT PAGE PAGEBY
 syn keyword sasStatement PUT REDIRECT REMOVE RENAME REPLACE RETAIN
-syn keyword sasStatement RETURN SELECT SET SKIP STARTSAS STOP TITLE
-syn keyword sasStatement UPDATE VAR WAITSAS WHERE WINDOW X SYSTASK
+syn keyword sasStatement RETURN SELECT SET SKIP STARTSAS STOP SUM SUMBY TITLE TEST TYPES
+syn keyword sasStatement UPDATE VALUE VAR WAITSAS WAYS WEIGHT WHERE WINDOW X SYSTASK
 
 " SAS/GRAPH statements (Zhenhuan Hu)
-syn keyword sasStatement GOPTIONS LEGEND PATTERN 
+syn keyword sasStatement GOPTIONS LEGEND PATTERN PLOT
+
+" SAS/CHART statements (Zhenhuan Hu)
+syn keyword sasStatement BLOCK HBAR PIE STAR VBAR
+
+" SAS/UNIVARIATE syntax (Zhenhuan Hu)
+syn keyword sasStatement CDFPLOT HISTOGRAM INSET PPPLOT PROBPLOT QQPLOT
 
 " Match declarations have to appear one per line (Paulo Tanimoto)
 syn match sasStatement "FOOTNOTE\d"
@@ -100,8 +106,8 @@ syn keyword sasODSKwd GRAPHICS HTML HTMLCSS HTML3 IMODE LISTING contained
 syn keyword sasODSKwd MAKEUP OUTPUT PACKAGESm PATH PCL PDF PHTML contained
 syn keyword sasODSKwd PRINTER PROCLABEL PROCTITLE PS RESULTWS RTF contained
 syn keyword sasODSKwd SELECT SHOW TAGSET TEXT TRACE USEGOPT VERIFY WML contained
-syn region sasODS start="^\s*ODS " end=";" contains=sasODSKwd, sasString, sasNumber
-syn region sasODS start=";\s*ODS " end=";" contains=sasODSKwd, sasString, sasNumber
+syn region sasODS start="^\s*ODS " end=";" contains=sasODSKwd, sasString, sasNumber, sasComment, sasMacro, sasMacroFunction, sasMacroVar
+syn region sasODS start=";\s*ODS " end=";" contains=sasODSKwd, sasString, sasNumber, sasComment, sasMacro, sasMacroFunction, sasMacroVar
 
 " Keywords that are used in Proc SQL
 " I left them as statements because SAS's enhanced editor highlights
@@ -114,28 +120,25 @@ syn keyword sasStatement NULL ON OR ORDER PRIMARY REFERENCES
 syn keyword sasStatement RESET RESTRICT RIGHT SELECT SET TABLE TABLES
 syn keyword sasStatement UNIQUE UPDATE VALIDATE VIEW WHERE
 
-" Used this to avoid highlighting in options of SAS statements (Zhenhuan Hu)
-syn keyword sasOptionKwd MISSING NCOL NOPCT NOROW contained;
-syn region sasStatementOption start="\/\s*[A-Za-z_]" end=";" contains=sasOptionKwd, sasString, sasNumber
-
 " SAS formats
 syn match sasFormatValue "\w\+\." contained
-syn region sasODS start="^\s*FORMAT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep
-syn region sasODS start="^\s*INPUT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep
-syn region sasODS start=";\s*FORMAT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep
-syn region sasODS start=";\s*INPUT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep
+syn region sasODS start="^\s*FORMAT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep, sasComment, sasMacro, sasMacroFunction, sasMacroVar
+syn region sasODS start="^\s*INPUT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep, sasComment, sasMacro, sasMacroFunction, sasMacroVar
+syn region sasODS start=";\s*FORMAT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep, sasComment, sasMacro, sasMacroFunction, sasMacroVar
+syn region sasODS start=";\s*INPUT " end=";" contains=sasFormatValue, sasStatement, sasString, sasNumber, sasStep, sasComment, sasMacro, sasMacroFunction, sasMacroVar
 
 " Thanks to Ronald Höllwarth for this fix to an intra-versioning
 " problem with this little feature
 " Used a more efficient way to match macro vars (Zhenhuan Hu)
 if version < 600
-	syn match sasMacroVar "\&\w\+"
+	syn match sasMacroVar "\&\+\w\+"
 else
-	syn match sasMacroVar "&\w\+"
+	syn match sasMacroVar "&\+\w\+"
 endif
 
 " Match declarations have to appear one per line (Paulo Tanimoto)
 syn match sasMacro "%BQUOTE"
+syn match sasMacro "%BY"
 syn match sasMacro "%NRBQUOTE"
 syn match sasMacro "%CMPRES"
 syn match sasMacro "%QCMPRES"
@@ -200,39 +203,48 @@ syn match sasMacro "%WINDOW"
 " User defined macro functions (Zhenhuan Hu)
 syn match sasMacroFunction "%\w\+("he=e-1
 
+" Used this to avoid highlighting in options of SAS statements (Zhenhuan Hu)
+syn keyword sasOptionKwd MISSING NCOL NOPCT NOROW contained
+syn region sasStatementOption start="\/\s*[A-Za-z_]" end=";" contains=sasOptionKwd, sasString, sasNumber, sasComment, sasMacro, sasMacroFunction, sasMacroVar
+
 " List of SAS function names
 syn keyword sasFunctionName ABS ADDR AIRY ARCOS ARSIN ATAN ATTRC ATTRN contained
+syn keyword sasFunctionName ANYALNUM ANYALPHA ANYDIGIT ANYPUNCT ANYSPACE contained
 syn keyword sasFunctionName BAND BETAINV BLSHIFT BNOT BOR BRSHIFT BXOR contained
-syn keyword sasFunctionName BYTE CDF CEIL CEXIST CINV CLOSE CNONCT COLLATE contained
-syn keyword sasFunctionName COMPBL COMPOUND COMPRESS COS COSH CSS CUROBS contained
-syn keyword sasFunctionName CV DACCDB DACCDBSL DACCSL DACCSYD DACCTAB contained
+syn keyword sasFunctionName BYTE COMPARE COMPGED COMPLEV CAT CATS CATT CATX contained
+syn keyword sasFunctionName CDF CEIL CEXIST CINV CLOSE CNONCT COLLATE contained
+syn keyword sasFunctionName COMPBL COMPOUND COMPRESS COS COSH COUNT COUNTC CUROBS contained
+syn keyword sasFunctionName CSS CV DACCDB DACCDBSL DACCSL DACCSYD DACCTAB contained
 syn keyword sasFunctionName DAIRY DATE DATEJUL DATEPART DATETIME DAY contained
 syn keyword sasFunctionName DCLOSE DEPDB DEPDBSL DEPDBSL DEPSL DEPSL contained
 syn keyword sasFunctionName DEPSYD DEPSYD DEPTAB DEPTAB DEQUOTE DHMS contained
 syn keyword sasFunctionName DIF DIGAMMA DIM DINFO DNUM DOPEN DOPTNAME contained
 syn keyword sasFunctionName DOPTNUM DREAD DROPNOTE DSNAME ERF ERFC EXIST contained
 syn keyword sasFunctionName EXP FAPPEND FCLOSE FCOL FDELETE FETCH FETCHOBS contained
-syn keyword sasFunctionName FEXIST FGET FILEEXIST FILENAME FILEREF FINFO contained
+syn keyword sasFunctionName FEXIST FGET FILEEXIST FILENAME FILEREF FIND FINDC FINFO contained
 syn keyword sasFunctionName FINV FIPNAME FIPNAMEL FIPSTATE FLOOR FNONCT contained
 syn keyword sasFunctionName FNOTE FOPEN FOPTNAME FOPTNUM FPOINT FPOS contained
 syn keyword sasFunctionName FPUT FREAD FREWIND FRLEN FSEP FUZZ FWRITE contained
 syn keyword sasFunctionName GAMINV GAMMA GETOPTION GETVARC GETVARN HBOUND contained
-syn keyword sasFunctionName HMS HOSTHELP HOUR IBESSEL INDEX INDEXC contained
+syn keyword sasFunctionName HMS HOSTHELP HOUR IBESSEL ID IDLABEL INDEX INDEXC contained
 syn keyword sasFunctionName INDEXW INPUT INPUTC INPUTN INT INTCK INTNX contained
 syn keyword sasFunctionName INTRR IRR JBESSEL JULDATE KURTOSIS LAG LBOUND contained
-syn keyword sasFunctionName LEFT LENGTH LGAMMA LIBNAME LIBREF LOG LOG10 contained
+syn keyword sasFunctionName LEFT LENGTH LENGTHC LENGTHM LENGTHN contained
+syn keyword sasFunctionName LGAMMA LIBNAME LIBREF LOG LOG10 contained
 syn keyword sasFunctionName LOG2 LOGPDF LOGPMF LOGSDF LOWCASE MAX MDY contained
-syn keyword sasFunctionName MEAN MIN MINUTE MOD MONTH MOPEN MORT N contained
-syn keyword sasFunctionName NETPV NMISS NORMAL NOTE NPV OPEN ORDINAL contained
+syn keyword sasFunctionName MEAN MIN MINUTE MISSING MOD MONTH MOPEN MORT N contained
+syn keyword sasFunctionName NETPV NMISS NORMAL NOTALNUM NOTAPLHA NOTDIGIT contained
+syn keyword sasFunctionName NOTUPPER NOTE NPV OPEN ORDINAL contained
 syn keyword sasFunctionName PATHNAME PDF PEEK PEEKC PMF POINT POISSON POKE contained
 syn keyword sasFunctionName PROBBETA PROBBNML PROBCHI PROBF PROBGAM contained
-syn keyword sasFunctionName PROBHYPR PROBIT PROBNEGB PROBNORM PROBT PUT contained
-syn keyword sasFunctionName PUTC PUTN QTR QUOTE RANBIN RANCAU RANEXP contained
+syn keyword sasFunctionName PROBHYPR PROBIT PROBNEGB PROBNORM PROBT PROPCASE contained
+syn keyword sasFunctionName PRXCHANGE PRXMATCH PRXNEXT PRXPAREN PRXPARSE PRXPOSN contained
+syn keyword sasFunctionName PRXSUBSTR PUT PUTC PUTN QTR QUOTE RANBIN RANCAU RANEXP contained
 syn keyword sasFunctionName RANGAM RANGE RANK RANNOR RANPOI RANTBL RANTRI contained
 syn keyword sasFunctionName RANUNI REPEAT RESOLVE REVERSE REWIND RIGHT contained
-syn keyword sasFunctionName ROUND SAVING SCAN SDF SECOND SIGN SIN SINH contained
+syn keyword sasFunctionName ROUND SAVING SCAN SCANQ SDF SECOND SIGN SIN SINH contained
 syn keyword sasFunctionName SKEWNESS SOUNDEX SPEDIS SQRT STD STDERR STFIPS contained
-syn keyword sasFunctionName STNAME STNAMEL SUBSTR SUM SYMGET SYSGET SYSMSG contained
+syn keyword sasFunctionName STNAME STNAMEL STRIP SUBSTR SUM SYMGET SYSGET SYSMSG contained
 syn keyword sasFunctionName SYSPROD SYSRC SYSTEM TAN TANH TIME TIMEPART contained
 syn keyword sasFunctionName TINV TNONCT TODAY TRANSLATE TRANWRD TRIGAMMA contained
 syn keyword sasFunctionName TRIM TRIMN TRUNC UNIFORM UPCASE USS VAR contained
@@ -309,7 +321,6 @@ if version >= 508 || !exists("did_sas_syntax_inits")
 	HiLink sasLogMsg Log
 	HiLink sasCards MoreMsg
 	HiLink sasInternalVariable PreProc
-	
 	
 	delcommand HiLink
 endif
