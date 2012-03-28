@@ -2,41 +2,46 @@
 " Language:  SAS
 " Maintainer:  Zhenhuan Hu <wildkeny@gmail.com>
 " Last Change:
-"    27 Feb 2012 by Zhenhuan Hu <wildkeny@gmail.com>
-
+"
+"    28 Mar 2012 by Zhenhuan Hu <wildkeny@gmail.com>
+"    
+"    Added syntax for macro comment
+"
+"    27 Feb 2012 by Zhenhuan Hu 
+"
 "    Completely rewrote approach for highlighting SAS statements 
 "    Updated new statements in Base SAS 9.3 and SAS/Stat
 "    Fixed glitches in highlighting procedure names and internal variables.
 "    Simplify the approach for highlighting SAS functions
 "    Added highlighting for hash and hiter objects
-
+"
 "    1 Apr 2011 by Zhenhuan Hu
-
+"
 "    Fixed mis-recognization of keywords and function names
 "    Fixed syntax issues when multiple comment statements being put in the same line
 "    More efficient approaches for highlighting statements, procs, and macros
 "    Added highlighting for new statements and functions introduced in SAS 9.1/9.2
 "    Added highlighting for user defined macro functions, ods statements and formats
-
+"
 "    18 Jul 2008 by Paulo Tanimoto <ptanimoto@gmail.com>
-
+"
 "    Fixed comments with * taking multiple lines
 "    Fixed highlighting of macro keywords
 "    Added words to cases that didn't fit anywhere
-
+"
 "    02 Jun 2003 by Bob Heckel
-
+"
 "    Added highlighting for additional keywords and such
 "    Attempted to match SAS default syntax colors
 "    Changed syncing so it doesn't lose colors on large blocks
-
+"
 "    26 Sep 2001 by James Kidd
-
+"
 "    Added keywords for use in SAS SQL procedure and highlighting for
 "    SAS base procedures, added logic to distinqush between versions
 "    for SAS macro variable highlighting (Thanks to user Ronald
 "    Höllwarth for pointing out bug)
-
+"
 "    For SAS 5: Clear all syntax items
 "    For SAS 6: Quit when a syntax file was already loaded
 
@@ -64,6 +69,8 @@ syn region sasComment start="/\*" end="\*/" contains=sasTodo
 syn region sasComment start=";\s*\*"ms=s+1 end=";"me=e-1 contains=sasTodo
 " Several comments can be put in the same line (Zhenhuan Hu)
 syn region sasComment start="^\s*\*" skip=";\s*\*" end=";"me=e-1 contains=sasTodo
+" Macro comments (Zhenhuan Hu)
+syn region sasComment start="^\s*%\*" end=";"me=e-1 contains=sasTodo
 " Self-defined section mark
 syn region sasSection start="/\* SECTION" end="\*/" contains=sasTodo
 
@@ -175,7 +182,7 @@ if version >= 508 || !exists("did_sas_syntax_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
 
-  hi Procedure term=bold ctermfg=Green gui=bold guifg=Orange
+  " hi Procedure term=bold ctermfg=Green gui=bold guifg=Orange
   hi Section gui=none guifg=grey20 guibg=White
 
   HiLink sasComment Comment
@@ -187,16 +194,16 @@ if version >= 508 || !exists("did_sas_syntax_inits")
   HiLink sasODSKwd Statement
   HiLink sasFunction Function
   HiLink sasMacro Function
-  HiLink sasMacroVar Function
   HiLink sasMacroFunction Function
+  HiLink sasMacroVar Macro
   HiLink sasNumber Number
   HiLink sasFormatValue Tag
   HiLink sasString String
-  HiLink sasProcName Procedure
+  HiLink sasProcName Keyword 
   HiLink sasSection Section
   HiLink sasTodo Todo
-  HiLink sasCards MoreMsg
-  HiLink sasInternalVariable PreProc
+  HiLink sasCards Special
+  HiLink sasInternalVariable Define
   
   delcommand HiLink
 endif
